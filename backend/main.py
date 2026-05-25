@@ -17,11 +17,21 @@ from sympy.parsing.sympy_parser import (
 import scipy.integrate as sci
 import numpy as np
 
+import os
+
 app = FastAPI(title="Calc3D Symbolic Backend", version="1.0.0")
+
+# Configure CORS dynamically for production deployment
+origins_str = os.getenv("ALLOWED_ORIGINS", "*")
+if origins_str == "*":
+    origins = ["*"]
+else:
+    origins = [o.strip() for o in origins_str.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=origins,
+    allow_credentials=True if "*" not in origins else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

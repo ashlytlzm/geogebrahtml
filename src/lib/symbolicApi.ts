@@ -4,7 +4,8 @@
  * Falls back gracefully to null when the backend is unavailable.
  */
 
-const BACKEND_URL = 'http://127.0.0.1:8787';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8787';
+
 let _backendAvailable: boolean | null = null; // null = not checked yet
 
 /** Check once if the backend is reachable */
