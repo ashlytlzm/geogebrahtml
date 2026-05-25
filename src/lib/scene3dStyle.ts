@@ -462,3 +462,33 @@ export function normalizePoint(
   if (!isInsideCube(nx, ny, nz)) return null;
   return [nx, ny, nz];
 }
+
+export function getEqualizedDomain(
+  xMin: number,
+  xMax: number,
+  yMin: number,
+  yMax: number,
+  zMin: number,
+  zMax: number,
+  padding = 0.08
+) {
+  const zSpanRaw = zMax - zMin;
+  const pad = Math.max(0.1, zSpanRaw * padding);
+  const zMinPadded = zMin - pad;
+  const zMaxPadded = zMax + pad;
+
+  const xAbs = Math.max(Math.abs(xMin), Math.abs(xMax));
+  const yAbs = Math.max(Math.abs(yMin), Math.abs(yMax));
+  const zAbs = Math.max(Math.abs(zMinPadded), Math.abs(zMaxPadded));
+
+  const maxVal = Math.max(xAbs, yAbs, zAbs, 1.0); // minimum half-span of 1.0 (total span 2.0)
+
+  return {
+    xMin: -maxVal,
+    xMax: maxVal,
+    yMin: -maxVal,
+    yMax: maxVal,
+    zMin: -maxVal,
+    zMax: maxVal,
+  };
+}

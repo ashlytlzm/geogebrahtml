@@ -12,7 +12,9 @@
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@types/katex": "^0.16.8",
     "@types/three": "^0.184.1",
+    "katex": "^0.16.47",
     "lucide-react": "^1.16.0",
     "mathjs": "^15.2.0",
     "plotly.js-dist-min": "^3.5.1",
