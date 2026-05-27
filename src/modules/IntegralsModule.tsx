@@ -346,13 +346,13 @@ export function IntegralsModule() {
   const plotRef = useRef<HTMLDivElement>(null);
   const zoomContainerRef = useRef<HTMLDivElement>(null);
   const activeInputRef = useRef<HTMLInputElement | null>(null);
-  const [activeInput, setActiveInput] = useState<'f' | 'zMin' | 'zMax' | 'yMin' | 'yMax'>('f');
+  const [activeInput, setActiveInput] = useState<'f' | 'zMin' | 'zMax' | 'yMin' | 'yMax' | 'xMin' | 'xMax'>('f');
 
   const [mode, setMode] = useState<IntegralMode>('doble');
   const [order, setOrder] = useState<string>('dydx');
   const [fExpr, setFExpr] = useState('x * y');
-  const [xMin, setXMin] = useState(0);
-  const [xMax, setXMax] = useState(1);
+  const [xMin, setXMin] = useState('0');
+  const [xMax, setXMax] = useState('1');
   const [yMinExpr, setYMinExpr] = useState('0');
   const [yMaxExpr, setYMaxExpr] = useState('1');
   const [zMinExpr, setZMinExpr] = useState('0');
@@ -404,7 +404,7 @@ export function IntegralsModule() {
     const p = PRESETS[i];
     setMode(p.mode);
     setFExpr(p.f);
-    setXMin(p.xMin); setXMax(p.xMax);
+    setXMin(String(p.xMin)); setXMax(String(p.xMax));
     setYMinExpr(p.yMin); setYMaxExpr(p.yMax);
     setZMinExpr(p.zMin); setZMaxExpr(p.zMax);
     setActivePreset(i);
@@ -421,6 +421,9 @@ export function IntegralsModule() {
     setComputing(true);
     setErrorText(null); setResultText(null); setResultLatex(null); setSteps([]);
 
+    const xMinVal = evalNumber(safeCompile(xMin), {}) ?? 0;
+    const xMaxVal = evalNumber(safeCompile(xMax), {}) ?? 1;
+
     if (mode === 'doble') {
       const sym = await symbolicDoubleIntegral(fExpr, xMin, xMax, yMinExpr, yMaxExpr, order);
       if (sym && sym.value !== null && sym.value !== undefined) {
@@ -432,7 +435,7 @@ export function IntegralsModule() {
         setComputing(false);
         return;
       }
-      const r = computeDoubleIntegral(fExpr, { xMin, xMax, yMinExpr, yMaxExpr, order: order as 'dydx' | 'dxdy' });
+      const r = computeDoubleIntegral(fExpr, { xMin: xMinVal, xMax: xMaxVal, yMinExpr, yMaxExpr, order: order as 'dydx' | 'dxdy' });
       setSteps(r.steps);
       setResultText(r.value !== null ? `∬_D f dA ≈ ${r.value.toFixed(10)}` : null);
       setResultLatex(r.value !== null ? `\\iint_D f\\,dA \\approx ${r.value.toFixed(8)}` : null);
@@ -449,7 +452,7 @@ export function IntegralsModule() {
         setComputing(false);
         return;
       }
-      const r = computeTripleIntegral(fExpr, { xMin, xMax, yMinExpr, yMaxExpr, zMinExpr, zMaxExpr, order: order as any });
+      const r = computeTripleIntegral(fExpr, { xMin: xMinVal, xMax: xMaxVal, yMinExpr, yMaxExpr, zMinExpr, zMaxExpr, order: order as any });
       setSteps(r.steps);
       setResultText(r.value !== null ? `∭_E f dV ≈ ${r.value.toFixed(10)}` : null);
       setResultLatex(r.value !== null ? `\\iiint_E f\\,dV \\approx ${r.value.toFixed(8)}` : null);
@@ -474,8 +477,11 @@ export function IntegralsModule() {
     const middleVar = isTriple ? order[3] : (order === 'dydx' ? 'y' : 'x');
     const outerVar = isTriple ? order[5] : (order === 'dydx' ? 'x' : 'y');
 
-    let computedXMin = xMin;
-    let computedXMax = xMax;
+    const xMinVal = evalNumber(safeCompile(xMin), {}) ?? 0;
+    const xMaxVal = evalNumber(safeCompile(xMax), {}) ?? 1;
+
+    let computedXMin = xMinVal;
+    let computedXMax = xMaxVal;
     let computedYMin = -3;
     let computedYMax = 3;
     let computedZMin = -3;
@@ -517,13 +523,13 @@ export function IntegralsModule() {
     let piso: any = null;
 
     if (mode === 'doble') {
-      s = sampleParametricSurface(fExpr, xMin, xMax, yMinExpr, yMaxExpr, outerVar, middleVar, 'z', 40);
-      base = sampleParametricSurface('0', xMin, xMax, yMinExpr, yMaxExpr, outerVar, middleVar, 'z', 30);
+      s = sampleParametricSurface(fExpr, xMinVal, xMaxVal, yMinExpr, yMaxExpr, outerVar, middleVar, 'z', 40);
+      base = sampleParametricSurface('0', xMinVal, xMaxVal, yMinExpr, yMaxExpr, outerVar, middleVar, 'z', 30);
       updateBounds(s);
       updateBounds(base);
     } else {
-      techo = sampleParametricSurface(zMaxExpr, xMin, xMax, yMinExpr, yMaxExpr, outerVar, middleVar, innerVar, 40);
-      piso = sampleParametricSurface(zMinExpr, xMin, xMax, yMinExpr, yMaxExpr, outerVar, middleVar, innerVar, 40);
+      techo = sampleParametricSurface(zMaxExpr, xMinVal, xMaxVal, yMinExpr, yMaxExpr, outerVar, middleVar, innerVar, 40);
+      piso = sampleParametricSurface(zMinExpr, xMinVal, xMaxVal, yMinExpr, yMaxExpr, outerVar, middleVar, innerVar, 40);
       updateBounds(techo);
       updateBounds(piso);
     }
@@ -646,8 +652,8 @@ export function IntegralsModule() {
     const wallMinMiddle = sampleWallAlongMiddle(
       floorExpr,
       ceilExpr,
-      xMin,
-      xMax,
+      xMinVal,
+      xMaxVal,
       yMinExpr,
       yMaxExpr,
       outerVar,
@@ -659,8 +665,8 @@ export function IntegralsModule() {
     const wallMaxMiddle = sampleWallAlongMiddle(
       floorExpr,
       ceilExpr,
-      xMin,
-      xMax,
+      xMinVal,
+      xMaxVal,
       yMinExpr,
       yMaxExpr,
       outerVar,
@@ -672,8 +678,8 @@ export function IntegralsModule() {
     const wallMinOuter = sampleWallAlongOuter(
       floorExpr,
       ceilExpr,
-      xMin,
-      xMax,
+      xMinVal,
+      xMaxVal,
       yMinExpr,
       yMaxExpr,
       outerVar,
@@ -685,8 +691,8 @@ export function IntegralsModule() {
     const wallMaxOuter = sampleWallAlongOuter(
       floorExpr,
       ceilExpr,
-      xMin,
-      xMax,
+      xMinVal,
+      xMaxVal,
       yMinExpr,
       yMaxExpr,
       outerVar,
@@ -966,21 +972,33 @@ export function IntegralsModule() {
                   <div>
                     <label style={{ fontSize: '11px', color: '#64748b' }}>{outerVar} mín</label>
                     <input
-                      type="number"
-                      step="any"
+                      ref={el => {
+                        if (activeInput === 'xMin') {
+                          activeInputRef.current = el;
+                        }
+                      }}
+                      type="text"
                       value={xMin}
-                      onChange={e => setXMin(parseFloat(e.target.value) || 0)}
-                      className="number-input"
+                      onChange={e => setXMin(e.target.value)}
+                      onFocus={() => { setActiveInput('xMin'); setShowKeyboard(true); }}
+                      className="math-input"
+                      style={{ fontSize: '12px' }}
                     />
                   </div>
                   <div>
                     <label style={{ fontSize: '11px', color: '#64748b' }}>{outerVar} máx</label>
                     <input
-                      type="number"
-                      step="any"
+                      ref={el => {
+                        if (activeInput === 'xMax') {
+                          activeInputRef.current = el;
+                        }
+                      }}
+                      type="text"
                       value={xMax}
-                      onChange={e => setXMax(parseFloat(e.target.value) || 0)}
-                      className="number-input"
+                      onChange={e => setXMax(e.target.value)}
+                      onFocus={() => { setActiveInput('xMax'); setShowKeyboard(true); }}
+                      className="math-input"
+                      style={{ fontSize: '12px' }}
                     />
                   </div>
                 </div>
@@ -999,7 +1017,9 @@ export function IntegralsModule() {
                 activeInput === 'zMin' ? zMinExpr :
                 activeInput === 'zMax' ? zMaxExpr :
                 activeInput === 'yMin' ? yMinExpr :
-                yMaxExpr
+                activeInput === 'yMax' ? yMaxExpr :
+                activeInput === 'xMin' ? xMin :
+                xMax
               }
               onChange={val => {
                 if (activeInput === 'f') setFExpr(val);
@@ -1007,6 +1027,8 @@ export function IntegralsModule() {
                 else if (activeInput === 'zMax') setZMaxExpr(val);
                 else if (activeInput === 'yMin') setYMinExpr(val);
                 else if (activeInput === 'yMax') setYMaxExpr(val);
+                else if (activeInput === 'xMin') setXMin(val);
+                else if (activeInput === 'xMax') setXMax(val);
               }}
               onEnter={() => setShowKeyboard(false)}
             />

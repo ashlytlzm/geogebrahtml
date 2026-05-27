@@ -62,8 +62,8 @@ Para desplegar en servicios modernos como Vercel y Render, es recomendable tener
 2. Haz clic en **Add New...** -> **Project**.
 3. Importa tu repositorio `geogebrahtml`.
 4. Configura el proyecto con los siguientes parámetros:
-   * **Framework Preset**: `Vite` (se detecta automáticamente).
-   * **Root Directory**: Deja este campo vacío (se construirá desde la raíz del repositorio, ya que allí está el `package.json` principal).
+   * **Application Preset / Framework Preset**: Cambia esto de **Services** a **Vite** *(esto es clave para que Vercel solo despliegue el frontend e ignore el backend de Python)*.
+   * **Root Directory**: Deja este campo vacío.
    * **Build Command**: `npm run build`
    * **Output Directory**: `dist`
    * **Install Command**: `npm install`

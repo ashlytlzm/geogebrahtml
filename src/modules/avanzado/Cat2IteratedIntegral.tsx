@@ -12,6 +12,7 @@ import type { IsoSceneHandles } from '../../lib/isoScene';
 import { computeDoubleIntegral, computeTripleIntegral } from '../../lib/numericalIntegration';
 import { detectCoordSystem } from '../../lib/coordDetect';
 import { Keyboard } from 'lucide-react';
+import { safeCompile, evalNumber } from '../../lib/mathEngine';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
@@ -56,7 +57,7 @@ export function Cat2IteratedIntegral() {
 
   const [isTriple, setIsTriple] = useState(false);
   const [fExpr, setFExpr] = useState('x + y');
-  const [xMin, setXMin] = useState(0); const [xMax, setXMax] = useState(1);
+  const [xMin, setXMin] = useState('0'); const [xMax, setXMax] = useState('1');
   const [yMinExpr, setYMinExpr] = useState('0'); const [yMaxExpr, setYMaxExpr] = useState('1');
   const [zMinExpr, setZMinExpr] = useState('0'); const [zMaxExpr, setZMaxExpr] = useState('1');
   const [order, setOrder] = useState<'dydx'|'dxdy'>('dydx');
@@ -69,7 +70,9 @@ export function Cat2IteratedIntegral() {
 
   const onReady = useCallback((h: IsoSceneHandles) => {
     handlesRef.current = h;
-    buildRegionBox(h.solidGroup, xMin, xMax, parseFloat(yMinExpr)||0, parseFloat(yMaxExpr)||1, parseFloat(zMinExpr)||0, parseFloat(zMaxExpr)||1);
+    const xMinVal = evalNumber(safeCompile(xMin), {}) ?? 0;
+    const xMaxVal = evalNumber(safeCompile(xMax), {}) ?? 1;
+    buildRegionBox(h.solidGroup, xMinVal, xMaxVal, parseFloat(yMinExpr)||0, parseFloat(yMaxExpr)||1, parseFloat(zMinExpr)||0, parseFloat(zMaxExpr)||1);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,11 +82,14 @@ export function Cat2IteratedIntegral() {
     if (sys !== 'cartesian') setCoordHint(`💡 Podría simplificarse en coordenadas ${sys === 'cylindrical' ? 'cilíndricas' : 'esféricas'}`);
     else setCoordHint('');
 
+    const xMinVal = evalNumber(safeCompile(xMin), {}) ?? 0;
+    const xMaxVal = evalNumber(safeCompile(xMax), {}) ?? 1;
+
     let res;
     if (isTriple) {
-      res = computeTripleIntegral(fExpr, { xMin, xMax, yMinExpr, yMaxExpr, zMinExpr, zMaxExpr });
+      res = computeTripleIntegral(fExpr, { xMin: xMinVal, xMax: xMaxVal, yMinExpr, yMaxExpr, zMinExpr, zMaxExpr });
     } else {
-      res = computeDoubleIntegral(fExpr, { xMin, xMax, yMinExpr, yMaxExpr, order });
+      res = computeDoubleIntegral(fExpr, { xMin: xMinVal, xMax: xMaxVal, yMinExpr, yMaxExpr, order });
     }
     setSteps(res.steps);
     setError(res.error);
@@ -94,7 +100,7 @@ export function Cat2IteratedIntegral() {
     }
     if (handlesRef.current) {
       buildRegionBox(handlesRef.current.solidGroup,
-        xMin, xMax,
+        xMinVal, xMaxVal,
         parseFloat(yMinExpr)||0, parseFloat(yMaxExpr)||1,
         isTriple ? (parseFloat(zMinExpr)||0) : 0,
         isTriple ? (parseFloat(zMaxExpr)||1) : 0.05);
@@ -140,8 +146,8 @@ export function Cat2IteratedIntegral() {
         <div className="field-group">
           <label className="field-label">Límites de x</label>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-            <div><label style={{fontSize:11,color:'#64748b'}}>x min</label><input type="number" step="any" value={xMin} onChange={e=>setXMin(+e.target.value||0)} className="number-input"/></div>
-            <div><label style={{fontSize:11,color:'#64748b'}}>x max</label><input type="number" step="any" value={xMax} onChange={e=>setXMax(+e.target.value||1)} className="number-input"/></div>
+            <div><label style={{fontSize:11,color:'#64748b'}}>x min</label><input type="text" value={xMin} onChange={e=>setXMin(e.target.value)} className="math-input" style={{padding:'5px 8px',height:32}}/></div>
+            <div><label style={{fontSize:11,color:'#64748b'}}>x max</label><input type="text" value={xMax} onChange={e=>setXMax(e.target.value)} className="math-input" style={{padding:'5px 8px',height:32}}/></div>
           </div>
         </div>
         <div className="field-group">

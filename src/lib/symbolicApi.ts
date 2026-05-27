@@ -65,7 +65,7 @@ async function post<T>(endpoint: string, body: unknown): Promise<T | null> {
 
 export async function symbolicDoubleIntegral(
   f: string,
-  x_min: number, x_max: number,
+  x_min: string, x_max: string,
   y_min_expr: string, y_max_expr: string,
   order?: string,
 ): Promise<SymbolicResult | null> {
@@ -80,7 +80,7 @@ export async function symbolicDoubleIntegral(
 
 export async function symbolicTripleIntegral(
   f: string,
-  x_min: number, x_max: number,
+  x_min: string, x_max: string,
   y_min_expr: string, y_max_expr: string,
   z_min_expr: string, z_max_expr: string,
   order?: string,

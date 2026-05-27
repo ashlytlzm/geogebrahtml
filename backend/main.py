@@ -83,8 +83,8 @@ def safe_latex(expr) -> str:
 
 class DoubleIntegralRequest(BaseModel):
     f: str
-    x_min: float
-    x_max: float
+    x_min: str
+    x_max: str
     y_min_expr: str
     y_max_expr: str
     order: Optional[str] = "dydx"
@@ -92,8 +92,8 @@ class DoubleIntegralRequest(BaseModel):
 
 class TripleIntegralRequest(BaseModel):
     f: str
-    x_min: float
-    x_max: float
+    x_min: str
+    x_max: str
     y_min_expr: str
     y_max_expr: str
     z_min_expr: str
@@ -151,6 +151,8 @@ def health():
 def double_integral(req: DoubleIntegralRequest):
     try:
         f_expr = parse(req.f)
+        x_min = parse(req.x_min)
+        x_max = parse(req.x_max)
         y_min = parse(req.y_min_expr)
         y_max = parse(req.y_max_expr)
 
@@ -172,7 +174,7 @@ def double_integral(req: DoubleIntegralRequest):
         })
 
         # Step 2: outer integral
-        outer = integrate(inner_simplified, (outer_var, req.x_min, req.x_max))
+        outer = integrate(inner_simplified, (outer_var, x_min, x_max))
         outer_simplified = simplify(outer)
         steps.append({
             "title": f"Integral externa ∫ [...] d{outer_var_str}",
@@ -210,7 +212,7 @@ def double_integral(req: DoubleIntegralRequest):
             # dblquad takes function(y, x), outer_lim_x, outer_lim_x, inner_y_lo, inner_y_hi
             val, err = dblquad(
                 lambda yv, xv: float(f_num(xv, yv)),
-                req.x_min, req.x_max,
+                float(x_min.evalf()), float(x_max.evalf()),
                 lambda xv: float(y_lo(xv)),
                 lambda xv: float(y_hi(xv)),
             )
@@ -230,6 +232,8 @@ def double_integral(req: DoubleIntegralRequest):
 def triple_integral(req: TripleIntegralRequest):
     try:
         f_expr = parse(req.f)
+        x_min = parse(req.x_min)
+        x_max = parse(req.x_max)
         y_min = parse(req.y_min_expr)
         y_max = parse(req.y_max_expr)
         z_min = parse(req.z_min_expr)
@@ -256,7 +260,7 @@ def triple_integral(req: TripleIntegralRequest):
         steps.append({"title": f"∫ d{middle_var_str}", "content": safe_latex(inner_y_s), "latex": safe_latex(inner_y_s)})
 
         # Outer integration
-        outer = integrate(inner_y_s, (outer_var, req.x_min, req.x_max))
+        outer = integrate(inner_y_s, (outer_var, x_min, x_max))
         outer_s = simplify(outer)
         steps.append({"title": f"∫ d{outer_var_str}", "content": safe_latex(outer_s), "latex": safe_latex(outer_s)})
 
@@ -278,7 +282,7 @@ def triple_integral(req: TripleIntegralRequest):
             # tplquad takes func(z, y, x), outer_x, outer_x, middle_y_lo, middle_y_hi, inner_z_lo, inner_z_hi
             val, _ = tplquad(
                 lambda zv, yv, xv: float(f_num(xv, yv, zv)),
-                req.x_min, req.x_max,
+                float(x_min.evalf()), float(x_max.evalf()),
                 lambda xv: float(sp.lambdify([LOCAL_VARS[outer_var_str]], parse(req.y_min_expr), "numpy")(xv)),
                 lambda xv: float(sp.lambdify([LOCAL_VARS[outer_var_str]], parse(req.y_max_expr), "numpy")(xv)),
                 lambda xv, yv: float(sp.lambdify([LOCAL_VARS[outer_var_str], LOCAL_VARS[middle_var_str]], parse(req.z_min_expr), "numpy")(xv, yv)),
